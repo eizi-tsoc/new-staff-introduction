@@ -1,4 +1,4 @@
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.3";
 const DEFAULT_DEPARTMENTS = ["北参道：外来看護部","北参道：病棟看護部","北参道：手術室看護部","北参道：リハビリテーション部","北参道：放射線科","北参道：医事課","池袋：外来看護部","池袋：リハビリテーション部","池袋：放射線科","池袋：医事課","総務部","診療部","その他"];
 const DEFAULT_OCCUPATIONS = ["看護師","准看護師","看護助手","理学療法士","アスレティックトレーナー","作業療法士","放射線技師","医療事務","医師","総務","その他"];
 const $ = id => document.getElementById(id);
@@ -33,13 +33,17 @@ function renderPreview(){
   const pages=[]; for(let i=0;i<staff.length;i+=5) pages.push(staff.slice(i,i+5)); if(!pages.length) pages.push([]);
   pages.forEach((pageStaff,pageIndex)=>{
     const page=document.createElement('div'); page.className='page';
-    page.innerHTML=`<div class="page-header"><img src="assets/TSOC_logo.png" alt="TSOC"><div class="page-title"><h2>新入職員のご紹介</h2></div><div class="page-subtitle">新しい仲間が加わりました。皆さま、どうぞよろしくお願いいたします。</div></div><div class="gold-line"></div><div class="cards"></div><div class="page-footer"><div><div class="footer-org">医療法人社団TSOC</div><div>理事長　菅谷 啓之　　院長　渡海 守人</div></div><div>Page ${pageIndex+1}/${pages.length}</div></div>`;
+    if(pageIndex > 0) page.classList.add('continuation');
+    const headerHtml = pageIndex === 0
+      ? `<div class="page-header"><img src="assets/TSOC_logo.png" alt="TSOC"><div class="page-title"><h2>新入職員のご紹介</h2></div><div class="page-subtitle">新しい仲間が加わりました。皆さま、どうぞよろしくお願いいたします。</div></div>`
+      : `<div class="page-header continuation-header"><div class="continuation-title">新入職員のご紹介 <span>続き</span></div><div class="continuation-note">前ページより続き</div></div>`;
+    page.innerHTML=`${headerHtml}<div class="gold-line"></div><div class="cards"></div><div class="page-footer"><div><div class="footer-org">医療法人社団TSOC</div><div>理事長　菅谷 啓之　　院長　渡海 守人</div></div><div>Page ${pageIndex+1}/${pages.length}</div></div>`;
     const cards=page.querySelector('.cards');
     for(let i=0;i<5;i++){
       const s=pageStaff[i];
       const card=document.createElement('div'); card.className='staff-card'+(!s?' empty-card':'');
       if(s){
-        const photoHtml = s.photo ? `<img class="photo" src="${s.photo}" alt="${escapeHtml(s.name)}">` : '<div class="photo photo-placeholder"></div>';
+        const photoHtml = s.photo ? `<img class="photo" src="${s.photo}" alt="${escapeHtml(s.name)}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'photo photo-placeholder'}))">` : '<div class="photo photo-placeholder"></div>';
         card.innerHTML=`${photoHtml}<div><div class="kana">${escapeHtml(s.kana)}</div><div class="staff-name">${escapeHtml(s.name)}</div><div class="badges"><span class="badge">${escapeHtml(s.department)}</span><span class="badge job">${escapeHtml(s.occupation)}</span></div><div class="join-date">入職日：${escapeHtml(formatDate(s.joinDate))}</div></div><div class="comment-wrap"><div class="comment-title">一言</div><div class="comment">${escapeHtml(s.comment||'よろしくお願いいたします。')}</div></div>`
       } else {
         card.innerHTML='<div class="photo photo-placeholder empty-photo"></div><div></div><div></div>'
@@ -69,9 +73,21 @@ async function makeLineImages(){
 function loadImage(src){return new Promise(resolve=>{const img=new Image(); img.onload=()=>resolve(img); img.onerror=()=>resolve(null); img.src=src;});}
 async function drawLinePage(items, pageNo, total){
   const c=$('lineCanvas'), ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.fillStyle='#19283b';
-  const logo=await loadImage('assets/TSOC_logo.png'); if(logo) ctx.drawImage(logo,60,34,330,88);
-  ctx.font='bold 44px sans-serif'; ctx.textAlign='right'; ctx.fillText('新入職員のご紹介',1020,80); ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('新しい仲間が加わりました。皆さま、どうぞよろしくお願いいたします。',540,140); ctx.fillStyle='#b49745'; ctx.fillRect(50,178,980,5);
-  for(let i=0;i<5;i++){const y=215+i*190; roundRect(ctx,60,y,960,160,18,'#fff','#d7dce2'); const s=items[i]; if(!s) continue; const img=await loadImage(s.photo); if(img){ctx.save(); roundClip(ctx,80,y+18,124,124,16); const scale=Math.max(124/img.width,124/img.height); const w=img.width*scale,h=img.height*scale; ctx.drawImage(img,80+(124-w)/2,y+18+(124-h)/2,w,h); ctx.restore();} else {roundRect(ctx,80,y+18,124,124,14,'#f0f2f5',null)} ctx.fillStyle='#667386'; ctx.font='18px sans-serif'; ctx.textAlign='left'; ctx.fillText(s.kana||'',230,y+45); ctx.fillStyle='#19283b'; ctx.font='bold 32px sans-serif'; ctx.fillText(s.name||'',230,y+82); ctx.font='bold 20px sans-serif'; roundRect(ctx,230,y+103,210,34,17,'#eef2f6',null); ctx.fillStyle='#19283b'; ctx.fillText(s.department||'',250,y+127); roundRect(ctx,465,y+103,210,34,17,'#f5efe3',null); ctx.fillStyle='#7c611c'; ctx.fillText(s.occupation||'',485,y+127); ctx.fillStyle='#5c6675'; ctx.font='17px sans-serif'; ctx.fillText('入職日：'+formatDate(s.joinDate),230,y+157); ctx.fillStyle='#9b7f2b'; ctx.font='bold 20px sans-serif'; ctx.fillText('一言',720,y+55); ctx.fillStyle='#142033'; ctx.font='22px sans-serif'; wrapText(ctx,s.comment||'よろしくお願いいたします。',720,y+92,270,32);} ctx.fillStyle='#19283b'; ctx.font='bold 22px sans-serif'; ctx.textAlign='left'; ctx.fillText('医療法人社団TSOC',60,1300); ctx.font='20px sans-serif'; ctx.fillText('理事長　菅谷 啓之　　院長　渡海 守人',60,1330); ctx.textAlign='right'; ctx.fillStyle='#8c95a3'; ctx.fillText(`Page ${pageNo}/${total}`,1020,1330); const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download=`新入職員紹介_LINE_page${pageNo}.png`; a.click();}
+  const logo=await loadImage('assets/TSOC_logo.png');
+  let startY;
+  if(pageNo === 1){
+    if(logo) ctx.drawImage(logo,60,34,330,88);
+    ctx.font='bold 44px sans-serif'; ctx.textAlign='right'; ctx.fillText('新入職員のご紹介',1020,80);
+    ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.fillText('新しい仲間が加わりました。皆さま、どうぞよろしくお願いいたします。',540,140);
+    ctx.fillStyle='#b49745'; ctx.fillRect(50,178,980,5);
+    startY=215;
+  } else {
+    ctx.font='bold 34px sans-serif'; ctx.textAlign='left'; ctx.fillText('新入職員のご紹介　続き',60,70);
+    ctx.font='20px sans-serif'; ctx.fillStyle='#667386'; ctx.textAlign='right'; ctx.fillText('前ページより続き',1020,70);
+    ctx.fillStyle='#b49745'; ctx.fillRect(50,105,980,5);
+    startY=145;
+  }
+  for(let i=0;i<5;i++){const y=startY+i*190; roundRect(ctx,60,y,960,160,18,'#fff','#d7dce2'); const s=items[i]; if(!s) continue; const img=await loadImage(s.photo); if(img){ctx.save(); roundClip(ctx,80,y+18,124,124,16); const scale=Math.max(124/img.width,124/img.height); const w=img.width*scale,h=img.height*scale; ctx.drawImage(img,80+(124-w)/2,y+18+(124-h)/2,w,h); ctx.restore();} else {roundRect(ctx,80,y+18,124,124,14,'#f0f2f5',null)} ctx.fillStyle='#667386'; ctx.font='18px sans-serif'; ctx.textAlign='left'; ctx.fillText(s.kana||'',230,y+45); ctx.fillStyle='#19283b'; ctx.font='bold 32px sans-serif'; ctx.fillText(s.name||'',230,y+82); ctx.font='bold 20px sans-serif'; roundRect(ctx,230,y+103,210,34,17,'#eef2f6',null); ctx.fillStyle='#19283b'; ctx.fillText(s.department||'',250,y+127); roundRect(ctx,465,y+103,210,34,17,'#f5efe3',null); ctx.fillStyle='#7c611c'; ctx.fillText(s.occupation||'',485,y+127); ctx.fillStyle='#5c6675'; ctx.font='17px sans-serif'; ctx.fillText('入職日：'+formatDate(s.joinDate),230,y+157); ctx.fillStyle='#9b7f2b'; ctx.font='bold 20px sans-serif'; ctx.fillText('一言',720,y+55); ctx.fillStyle='#142033'; ctx.font='22px sans-serif'; wrapText(ctx,s.comment||'よろしくお願いいたします。',720,y+92,270,32);} ctx.fillStyle='#19283b'; ctx.font='bold 22px sans-serif'; ctx.textAlign='left'; ctx.fillText('医療法人社団TSOC',60,1300); ctx.font='20px sans-serif'; ctx.fillText('理事長　菅谷 啓之　　院長　渡海 守人',60,1330); ctx.textAlign='right'; ctx.fillStyle='#8c95a3'; ctx.fillText(`Page ${pageNo}/${total}`,1020,1330); const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download=`新入職員紹介_LINE_page${pageNo}.png`; a.click();}
 function roundRect(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.stroke();}}
 function roundClip(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.clip();}
 function wrapText(ctx,text,x,y,maxWidth,lineHeight){let line='', words=String(text).split(''); for(const ch of words){const test=line+ch; if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,y); line=ch; y+=lineHeight;}else line=test;} if(line)ctx.fillText(line,x,y);}
