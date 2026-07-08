@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TSOC 新入職員紹介ツール Web</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>TSOC 新入職員紹介ツール <span>Web Ver.1.0.0</span></h1>
+      <p>ローカルテスト版 Ver.1.10.6 をベースにした GitHub Pages 用Web版です。</p>
+    </div>
+    <button id="masterBtn" class="secondary">マスタ管理</button>
+  </header>
+
+  <main class="layout">
+    <section class="panel input-panel">
+      <h2>入力</h2>
+      <div class="form-grid">
+        <label>氏名<input id="name" type="text" autocomplete="off"></label>
+        <label>フリガナ<input id="kana" type="text" autocomplete="off"></label>
+        <label>所属<select id="department"></select></label>
+        <label>職種<select id="occupation"></select></label>
+        <label>入職日<input id="joinDate" type="date"></label>
+        <label class="full">一言<textarea id="comment" rows="4" placeholder="よろしくお願いいたします。"></textarea></label>
+      </div>
+
+      <div class="photo-area">
+        <div>
+          <label class="photo-label">写真</label>
+          <input id="photoInput" type="file" accept="image/*">
+          <p class="hint">選択した写真はこのブラウザ内に一時保存されます。</p>
+        </div>
+        <div class="preview-box"><img id="photoPreview" alt="写真プレビュー"></div>
+      </div>
+
+      <div class="button-row">
+        <button id="addBtn">登録</button>
+        <button id="updateBtn" disabled>更新</button>
+        <button id="clearBtn" class="secondary">クリア</button>
+      </div>
+    </section>
+
+    <section class="panel list-panel">
+      <h2>登録済み一覧 <span class="small">ダブルクリックで編集</span></h2>
+      <table id="staffTable">
+        <thead><tr><th>氏名</th><th>フリガナ</th><th>所属</th><th>職種</th><th>入職日</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="button-row">
+        <button id="deleteBtn" class="danger">選択行を削除</button>
+        <button id="saveBtn" class="secondary">データ保存</button>
+        <button id="loadBtn" class="secondary">データ読込</button>
+        <input id="loadInput" type="file" accept="application/json" hidden>
+      </div>
+    </section>
+
+    <section class="panel output-panel">
+      <h2>出力</h2>
+      <div class="button-row">
+        <button id="previewBtn">プレビュー更新</button>
+        <button id="printBtn">PDF作成 / 印刷</button>
+        <button id="lineBtn">LINE画像作成</button>
+      </div>
+      <p class="hint">PDFはブラウザの印刷画面で「PDFに保存」を選択してください。文字はHTMLとして出力するため荒れにくいです。</p>
+    </section>
+
+    <section class="print-area" id="printArea"></section>
+  </main>
+
+  <dialog id="masterDialog">
+    <form method="dialog" class="master-box">
+      <h2>マスタ管理</h2>
+      <div class="master-columns">
+        <div>
+          <h3>所属</h3>
+          <textarea id="departmentMaster" rows="16"></textarea>
+        </div>
+        <div>
+          <h3>職種</h3>
+          <textarea id="occupationMaster" rows="16"></textarea>
+        </div>
+      </div>
+      <p class="hint">1行につき1項目で編集してください。保存後、ドロップダウンに反映されます。</p>
+      <div class="button-row right">
+        <button id="masterSaveBtn" value="default">保存</button>
+        <button class="secondary" value="cancel">閉じる</button>
+      </div>
+    </form>
+  </dialog>
+
+  <canvas id="lineCanvas" width="1080" height="1350" hidden></canvas>
+  <script src="app.js"></script>
+</body>
+</html>
