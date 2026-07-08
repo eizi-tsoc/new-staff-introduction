@@ -1,3 +1,4 @@
+const APP_VERSION = "1.0.2";
 const DEFAULT_DEPARTMENTS = ["北参道：外来看護部","北参道：病棟看護部","北参道：手術室看護部","北参道：リハビリテーション部","北参道：放射線科","北参道：医事課","池袋：外来看護部","池袋：リハビリテーション部","池袋：放射線科","池袋：医事課","総務部","診療部","その他"];
 const DEFAULT_OCCUPATIONS = ["看護師","准看護師","看護助手","理学療法士","アスレティックトレーナー","作業療法士","放射線技師","医療事務","医師","総務","その他"];
 const $ = id => document.getElementById(id);
@@ -37,7 +38,12 @@ function renderPreview(){
     for(let i=0;i<5;i++){
       const s=pageStaff[i];
       const card=document.createElement('div'); card.className='staff-card'+(!s?' empty-card':'');
-      if(s){card.innerHTML=`<img class="photo" src="${s.photo||''}" alt=""><div><div class="kana">${escapeHtml(s.kana)}</div><div class="staff-name">${escapeHtml(s.name)}</div><div class="badges"><span class="badge">${escapeHtml(s.department)}</span><span class="badge job">${escapeHtml(s.occupation)}</span></div><div class="join-date">入職日：${escapeHtml(formatDate(s.joinDate))}</div></div><div class="comment-wrap"><div class="comment-title">一言</div><div class="comment">${escapeHtml(s.comment||'よろしくお願いいたします。')}</div></div>`} else {card.innerHTML='<div class="photo"></div><div></div><div></div>'}
+      if(s){
+        const photoHtml = s.photo ? `<img class="photo" src="${s.photo}" alt="${escapeHtml(s.name)}">` : '<div class="photo photo-placeholder"></div>';
+        card.innerHTML=`${photoHtml}<div><div class="kana">${escapeHtml(s.kana)}</div><div class="staff-name">${escapeHtml(s.name)}</div><div class="badges"><span class="badge">${escapeHtml(s.department)}</span><span class="badge job">${escapeHtml(s.occupation)}</span></div><div class="join-date">入職日：${escapeHtml(formatDate(s.joinDate))}</div></div><div class="comment-wrap"><div class="comment-title">一言</div><div class="comment">${escapeHtml(s.comment||'よろしくお願いいたします。')}</div></div>`
+      } else {
+        card.innerHTML='<div class="photo photo-placeholder empty-photo"></div><div></div><div></div>'
+      }
       cards.appendChild(card);
     }
     area.appendChild(page);

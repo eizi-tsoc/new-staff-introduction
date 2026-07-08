@@ -1,12 +1,27 @@
-# TSOC 新入職員紹介ツール Web版
+# TSOC 新入職員紹介ツール Web
 
-## Version
-1.0.1
+Web v1.0.2
 
 ## 更新内容
-- PDF出力時の重なりを修正しました。
-- A4 1ページあたり最大5名固定の印刷レイアウトに調整しました。
-- 6名以上は次ページに分割されます。
 
-## GitHub Pages
-`index.html` をリポジトリ直下に配置して GitHub Pages を有効化してください。
+- PDF/印刷時の5名固定レイアウト対応
+- 6名以上は2ページ目以降へ分割
+- 写真未登録時の画像位置崩れを修正
+- 画面上のバージョン表記を更新
+
+## GitHub Pages更新方法
+
+ZIPを解凍し、中身をGitHubリポジトリ直下へ上書きアップロードしてください。
+
+アップロード対象：
+
+- index.html
+- styles.css
+- app.js
+- assets/
+- data/
+- README.md
+- CHANGELOG.md
+- VERSION.txt
+
+アップロード後、ブラウザ表示が古い場合は Ctrl + F5 で再読み込みしてください。
