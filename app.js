@@ -1,4 +1,4 @@
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.1.0";
 const DEFAULT_DEPARTMENTS = ["北参道：外来看護部","北参道：病棟看護部","北参道：手術室看護部","北参道：リハビリテーション部","北参道：放射線科","北参道：医事課","池袋：外来看護部","池袋：リハビリテーション部","池袋：放射線科","池袋：医事課","総務部","診療部","その他"];
 const DEFAULT_OCCUPATIONS = ["看護師","准看護師","看護助手","理学療法士","アスレティックトレーナー","作業療法士","放射線技師","医療事務","医師","総務","その他"];
 const $ = id => document.getElementById(id);
@@ -7,6 +7,11 @@ let occupations = JSON.parse(localStorage.getItem('tsoc_occupations') || 'null')
 let staff = JSON.parse(localStorage.getItem('tsoc_staff') || '[]');
 let selectedIndex = -1;
 let photoData = '';
+let photoOriginalData = '';
+let photoCropState = { zoom: 1, offsetX: 0, offsetY: 0 };
+let cropImage = null;
+let cropDragging = false;
+let cropLastPoint = null;
 
 function fillSelects(){
   $('department').innerHTML = departments.map(v=>`<option>${escapeHtml(v)}</option>`).join('');
@@ -14,9 +19,9 @@ function fillSelects(){
 }
 function escapeHtml(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 function formatDate(v){ if(!v) return ''; const [y,m,d]=v.split('-'); return `${Number(m)}月${Number(d)}日`; }
-function currentForm(){return {name:$('name').value.trim(),kana:$('kana').value.trim(),department:$('department').value,occupation:$('occupation').value,joinDate:$('joinDate').value,comment:$('comment').value.trim(),photo:photoData};}
-function setForm(item){$('name').value=item.name||'';$('kana').value=item.kana||'';$('department').value=item.department||departments[0];$('occupation').value=item.occupation||occupations[0];$('joinDate').value=item.joinDate||'';$('comment').value=item.comment||'';photoData=item.photo||'';showPhoto(photoData);}
-function clearForm(){selectedIndex=-1;photoData='';setForm({});$('updateBtn').disabled=true;$('addBtn').disabled=false;$('staffTable').querySelectorAll('tr').forEach(tr=>tr.classList.remove('selected'));}
+function currentForm(){return {name:$('name').value.trim(),kana:$('kana').value.trim(),department:$('department').value,occupation:$('occupation').value,joinDate:$('joinDate').value,comment:$('comment').value.trim(),photo:photoData,photoOriginal:photoOriginalData||photoData,photoCrop:{...photoCropState}};}
+function setForm(item){$('name').value=item.name||'';$('kana').value=item.kana||'';$('department').value=item.department||departments[0];$('occupation').value=item.occupation||occupations[0];$('joinDate').value=item.joinDate||'';$('comment').value=item.comment||'';photoData=item.photo||'';photoOriginalData=item.photoOriginal||item.photo||'';photoCropState=item.photoCrop?{zoom:Number(item.photoCrop.zoom)||1,offsetX:Number(item.photoCrop.offsetX)||0,offsetY:Number(item.photoCrop.offsetY)||0}:{zoom:1,offsetX:0,offsetY:0};showPhoto(photoData);$('photoAdjustBtn').disabled=!photoOriginalData;}
+function clearForm(){selectedIndex=-1;photoData='';photoOriginalData='';photoCropState={zoom:1,offsetX:0,offsetY:0};setForm({});$('photoAdjustBtn').disabled=true;$('photoInput').value='';$('updateBtn').disabled=true;$('addBtn').disabled=false;$('staffTable').querySelectorAll('tr').forEach(tr=>tr.classList.remove('selected'));}
 function showPhoto(src){const img=$('photoPreview'); if(src){img.src=src; img.style.display='block';}else{img.removeAttribute('src'); img.style.display='none';}}
 function saveLocal(){localStorage.setItem('tsoc_staff',JSON.stringify(staff));}
 function renderTable(){
@@ -53,6 +58,18 @@ function renderPreview(){
     area.appendChild(page);
   });
 }
+
+function loadCropImage(src){return new Promise(resolve=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src;});}
+function clampCropOffsets(){if(!cropImage)return;const canvas=$('cropCanvas');const base=Math.max(canvas.width/cropImage.naturalWidth,canvas.height/cropImage.naturalHeight);const scale=base*photoCropState.zoom;const drawW=cropImage.naturalWidth*scale,drawH=cropImage.naturalHeight*scale;const maxX=Math.max(0,(drawW-canvas.width)/2),maxY=Math.max(0,(drawH-canvas.height)/2);photoCropState.offsetX=Math.max(-maxX,Math.min(maxX,photoCropState.offsetX));photoCropState.offsetY=Math.max(-maxY,Math.min(maxY,photoCropState.offsetY));}
+function drawCropEditor(){const canvas=$('cropCanvas'),ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#e9edf2';ctx.fillRect(0,0,canvas.width,canvas.height);if(!cropImage)return;clampCropOffsets();const base=Math.max(canvas.width/cropImage.naturalWidth,canvas.height/cropImage.naturalHeight);const scale=base*photoCropState.zoom;const w=cropImage.naturalWidth*scale,h=cropImage.naturalHeight*scale;const x=(canvas.width-w)/2+photoCropState.offsetX,y=(canvas.height-h)/2+photoCropState.offsetY;ctx.drawImage(cropImage,x,y,w,h);ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=4;ctx.strokeRect(2,2,canvas.width-4,canvas.height-4);}
+async function openPhotoEditor(){if(!photoOriginalData)return;cropImage=await loadCropImage(photoOriginalData);if(!cropImage){alert('写真を読み込めませんでした。');return;}$('photoZoom').value=String(photoCropState.zoom||1);drawCropEditor();$('photoDialog').showModal();}
+function cropPoint(e){const rect=$('cropCanvas').getBoundingClientRect();const p=e.touches?e.touches[0]:e;return{x:(p.clientX-rect.left)*($('cropCanvas').width/rect.width),y:(p.clientY-rect.top)*($('cropCanvas').height/rect.height)};}
+function startCropDrag(e){if(!cropImage)return;cropDragging=true;cropLastPoint=cropPoint(e);$('cropCanvas').classList.add('dragging');if(e.cancelable)e.preventDefault();}
+function moveCropDrag(e){if(!cropDragging)return;const p=cropPoint(e);photoCropState.offsetX+=p.x-cropLastPoint.x;photoCropState.offsetY+=p.y-cropLastPoint.y;cropLastPoint=p;drawCropEditor();if(e.cancelable)e.preventDefault();}
+function endCropDrag(){cropDragging=false;cropLastPoint=null;$('cropCanvas').classList.remove('dragging');}
+function applyPhotoCrop(){if(!cropImage)return;drawCropEditor();const source=$('cropCanvas'),output=document.createElement('canvas');output.width=1200;output.height=1200;output.getContext('2d').drawImage(source,0,0,1200,1200);photoData=output.toDataURL('image/jpeg',0.94);showPhoto(photoData);$('photoAdjustBtn').disabled=false;$('photoDialog').close();}
+function resetPhotoCrop(){photoCropState={zoom:1,offsetX:0,offsetY:0};$('photoZoom').value='1';drawCropEditor();}
+
 function openMaster(){ $('departmentMaster').value=departments.join('\n'); $('occupationMaster').value=occupations.join('\n'); $('masterDialog').showModal(); }
 function saveMaster(){
   departments=$('departmentMaster').value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
@@ -61,7 +78,20 @@ function saveMaster(){
   localStorage.setItem('tsoc_departments',JSON.stringify(departments)); localStorage.setItem('tsoc_occupations',JSON.stringify(occupations)); fillSelects(); $('masterDialog').close(); alert('マスタを保存しました。');
 }
 function downloadJson(){const blob=new Blob([JSON.stringify({staff,departments,occupations},null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tsoc_staff_intro_data.json'; a.click(); URL.revokeObjectURL(a.href);}
-function loadJsonFile(file){const r=new FileReader(); r.onload=()=>{try{const data=JSON.parse(r.result); if(Array.isArray(data.staff)) staff=data.staff; if(Array.isArray(data.departments)) departments=data.departments; if(Array.isArray(data.occupations)) occupations=data.occupations; localStorage.setItem('tsoc_departments',JSON.stringify(departments)); localStorage.setItem('tsoc_occupations',JSON.stringify(occupations)); saveLocal(); fillSelects(); renderTable(); renderPreview(); alert('読み込みました。');}catch(e){alert('JSONの読み込みに失敗しました。');}}; r.readAsText(file,'utf-8');}
+function loadJsonFile(file){const r=new FileReader(); r.onload=()=>{try{const data=JSON.parse(r.result); if(Array.isArray(data.staff)) staff=data.staff; if(Array.isArray(data.departments)) departments=data.departments; if(Array.isArray(data.occupations)) occupations=data.occupations; localStorage.setItem('tsoc_departments',JSON.stringify(departments)); localStorage.setItem('tsoc_occupations',JSON.stringify(occupations)); saveLocal(); 
+$('photoAdjustBtn').onclick=openPhotoEditor;
+$('photoZoom').addEventListener('input',e=>{photoCropState.zoom=Number(e.target.value);drawCropEditor();});
+$('photoResetBtn').onclick=resetPhotoCrop;
+$('photoApplyBtn').onclick=applyPhotoCrop;
+$('photoCancelBtn').onclick=()=>$('photoDialog').close();
+$('cropCanvas').addEventListener('mousedown',startCropDrag);
+window.addEventListener('mousemove',moveCropDrag);
+window.addEventListener('mouseup',endCropDrag);
+$('cropCanvas').addEventListener('touchstart',startCropDrag,{passive:false});
+window.addEventListener('touchmove',moveCropDrag,{passive:false});
+window.addEventListener('touchend',endCropDrag);
+
+fillSelects(); renderTable(); renderPreview(); alert('読み込みました。');}catch(e){alert('JSONの読み込みに失敗しました。');}}; r.readAsText(file,'utf-8');}
 async function makeLineImages(){
   renderPreview();
   const pages=[...document.querySelectorAll('.page')];
@@ -92,9 +122,22 @@ function roundRect(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);
 function roundClip(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();ctx.clip();}
 function wrapText(ctx,text,x,y,maxWidth,lineHeight){let line='', words=String(text).split(''); for(const ch of words){const test=line+ch; if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line,x,y); line=ch; y+=lineHeight;}else line=test;} if(line)ctx.fillText(line,x,y);}
 
-$('photoInput').addEventListener('change',e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{photoData=r.result; showPhoto(photoData);}; r.readAsDataURL(f);});
+$('photoInput').addEventListener('change',e=>{const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=async()=>{photoOriginalData=r.result;photoData=r.result;photoCropState={zoom:1,offsetX:0,offsetY:0};showPhoto(photoData);$('photoAdjustBtn').disabled=false;await openPhotoEditor();}; r.readAsDataURL(f);});
 $('addBtn').onclick=()=>{const item=currentForm(); if(!validate(item))return; staff.push(item); saveLocal(); renderTable(); renderPreview(); clearForm();};
 $('updateBtn').onclick=()=>{if(selectedIndex<0)return; const item=currentForm(); if(!validate(item))return; staff[selectedIndex]=item; saveLocal(); renderTable(); renderPreview(); clearForm();};
 $('deleteBtn').onclick=()=>{if(selectedIndex<0){alert('削除する行を選択してください。');return;} if(confirm('選択行を削除しますか？')){staff.splice(selectedIndex,1); saveLocal(); clearForm(); renderTable(); renderPreview();}};
 $('clearBtn').onclick=clearForm; $('previewBtn').onclick=renderPreview; $('printBtn').onclick=()=>{renderPreview(); window.print();}; $('lineBtn').onclick=makeLineImages; $('saveBtn').onclick=downloadJson; $('loadBtn').onclick=()=>$('loadInput').click(); $('loadInput').onchange=e=>{if(e.target.files[0]) loadJsonFile(e.target.files[0]);}; $('masterBtn').onclick=openMaster; $('masterSaveBtn').onclick=e=>{e.preventDefault(); saveMaster();};
+
+$('photoAdjustBtn').onclick=openPhotoEditor;
+$('photoZoom').addEventListener('input',e=>{photoCropState.zoom=Number(e.target.value);drawCropEditor();});
+$('photoResetBtn').onclick=resetPhotoCrop;
+$('photoApplyBtn').onclick=applyPhotoCrop;
+$('photoCancelBtn').onclick=()=>$('photoDialog').close();
+$('cropCanvas').addEventListener('mousedown',startCropDrag);
+window.addEventListener('mousemove',moveCropDrag);
+window.addEventListener('mouseup',endCropDrag);
+$('cropCanvas').addEventListener('touchstart',startCropDrag,{passive:false});
+window.addEventListener('touchmove',moveCropDrag,{passive:false});
+window.addEventListener('touchend',endCropDrag);
+
 fillSelects(); renderTable(); renderPreview();

@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TSOC 新入職員紹介ツール Web</title>
-  <link rel="stylesheet" href="styles.css?v=1.0.3">
+  <link rel="stylesheet" href="styles.css?v=1.1.0">
 </head>
 <body>
   <header class="app-header">
     <div>
-      <h1>TSOC 新入職員紹介ツール <span>Web Ver.1.0.3</span></h1>
-      <p>Web版 v1.0.3：Web表示の写真位置・2ページ目以降の続きヘッダー・バージョン表記を修正しました。</p>
+      <h1>TSOC 新入職員紹介ツール <span>Web Ver.1.1.0</span></h1>
+      <p>Web版 v1.1.0：写真の位置・拡大率を調整できるトリミング機能を追加しました。</p>
     </div>
     <button id="masterBtn" class="secondary">マスタ管理</button>
   </header>
@@ -33,7 +33,10 @@
           <input id="photoInput" type="file" accept="image/*">
           <p class="hint">選択した写真はこのブラウザ内に一時保存されます。</p>
         </div>
-        <div class="preview-box"><img id="photoPreview" alt="写真プレビュー"></div>
+        <div>
+          <div class="preview-box"><img id="photoPreview" alt="写真プレビュー"></div>
+          <button id="photoAdjustBtn" type="button" class="secondary photo-adjust-btn" disabled>写真位置を調整</button>
+        </div>
       </div>
 
       <div class="button-row">
@@ -91,7 +94,26 @@
     </form>
   </dialog>
 
+
+  <dialog id="photoDialog">
+    <div class="photo-editor-box">
+      <h2>写真位置の調整</h2>
+      <p class="hint">写真をドラッグして位置を調整し、スライダーで拡大・縮小してください。</p>
+      <div class="crop-stage-wrap">
+        <canvas id="cropCanvas" width="600" height="600" aria-label="写真トリミングプレビュー"></canvas>
+      </div>
+      <label class="zoom-control">拡大率
+        <input id="photoZoom" type="range" min="1" max="3" step="0.01" value="1">
+      </label>
+      <div class="button-row right">
+        <button id="photoResetBtn" type="button" class="secondary">元に戻す</button>
+        <button id="photoApplyBtn" type="button">この位置で決定</button>
+        <button id="photoCancelBtn" type="button" class="secondary">閉じる</button>
+      </div>
+    </div>
+  </dialog>
+
   <canvas id="lineCanvas" width="1080" height="1350" hidden></canvas>
-  <script src="app.js?v=1.0.3"></script>
+  <script src="app.js?v=1.1.0"></script>
 </body>
 </html>
