@@ -81,3 +81,9 @@
 .zoom-control{display:flex;align-items:center;gap:14px;font-weight:700;max-width:520px;margin:0 auto}
 .zoom-control input{flex:1}
 .comment{white-space:pre-wrap;overflow-wrap:anywhere}
+
+
+/* v1.2.0 display-order controls */
+.order-number{width:58px;text-align:center}
+#staffTable tbody td:first-child{text-align:center;font-weight:700;color:#687386}
+#moveUpBtn,#moveDownBtn{min-width:92px}

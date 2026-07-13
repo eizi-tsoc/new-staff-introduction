@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TSOC 新入職員紹介ツール Web</title>
-  <link rel="stylesheet" href="styles.css?v=1.1.2">
+  <link rel="stylesheet" href="styles.css?v=1.2.0">
 </head>
 <body>
   <header class="app-header">
     <div>
-      <h1>TSOC 新入職員紹介ツール <span>Web Ver.1.1.2</span></h1>
-      <p>Web版 v1.1.2：PDF印刷時に「一言」が消える不具合を修正しました。</p>
+      <h1>TSOC 新入職員紹介ツール <span>Web Ver.1.2.0</span></h1>
+      <p>Web版 v1.2.0：登録後の表示順を「上へ」「下へ」で変更できるようにしました。</p>
     </div>
     <button id="masterBtn" class="secondary">マスタ管理</button>
   </header>
@@ -49,10 +49,12 @@
     <section class="panel list-panel">
       <h2>登録済み一覧 <span class="small">ダブルクリックで編集</span></h2>
       <table id="staffTable">
-        <thead><tr><th>氏名</th><th>フリガナ</th><th>所属</th><th>職種</th><th>入職日</th></tr></thead>
+        <thead><tr><th class="order-number">No.</th><th>氏名</th><th>フリガナ</th><th>所属</th><th>職種</th><th>入職日</th></tr></thead>
         <tbody></tbody>
       </table>
       <div class="button-row">
+        <button id="moveUpBtn" class="secondary" disabled>▲ 上へ</button>
+        <button id="moveDownBtn" class="secondary" disabled>▼ 下へ</button>
         <button id="deleteBtn" class="danger">選択行を削除</button>
         <button id="saveBtn" class="secondary">データ保存</button>
         <button id="loadBtn" class="secondary">データ読込</button>
@@ -113,6 +115,6 @@
   </dialog>
 
   <canvas id="lineCanvas" width="1080" height="1350" hidden></canvas>
-  <script src="app.js?v=1.1.2"></script>
+  <script src="app.js?v=1.2.0"></script>
 </body>
 </html>
