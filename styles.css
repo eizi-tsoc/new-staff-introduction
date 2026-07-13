@@ -70,7 +70,7 @@
 @media(max-width:800px){.form-grid{grid-template-columns:1fr}.photo-area{flex-direction:column}.master-columns{grid-template-columns:1fr}.page{padding:22px}.staff-card{grid-template-columns:90px 1fr}.comment-wrap{grid-column:1/-1}.photo{width:90px;height:90px}.page-header{grid-template-columns:1fr}.page-title{text-align:left}}
 
 
-/* v1.1.0 photo crop editor */
+/* v1.1.1 photo crop editor */
 .photo-adjust-btn{margin-top:10px;width:180px}
 #photoDialog{border:0;border-radius:16px;padding:0;width:min(720px,94vw)}
 #photoDialog::backdrop{background:rgba(0,0,0,.45)}
@@ -80,3 +80,4 @@
 #cropCanvas.dragging{cursor:grabbing}
 .zoom-control{display:flex;align-items:center;gap:14px;font-weight:700;max-width:520px;margin:0 auto}
 .zoom-control input{flex:1}
+.comment{white-space:pre-wrap;overflow-wrap:anywhere}
